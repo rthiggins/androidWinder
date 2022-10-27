@@ -22,6 +22,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -70,13 +71,23 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private TextView winderStateText;
     private WinderState winderState = WinderState.unknown;
     private TextView windCountText;
-    private int windCount = 0;
+    private Integer windCount = 0;
     private int traversePosition = 0;
+
+    private TextView traversePositionText;
+    private TextView winderFaceText;
+    private TextView maxSpeedText;
+
+    private TextView leftLimitText;
+    private TextView rightLimitText;
+    private TextView traverseIncrementText;
+    private TextView windTargetText;
+    private TextView directionText;
 
     private String jsonData = "";
 
-    private MachineConfig machineConfig;
-    private WindConfig windConfig;
+    private MachineConfig machineConfig = new MachineConfig();
+    private WindConfig windConfig = new WindConfig();
 
 
     public class MachineConfig{
@@ -159,7 +170,30 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         }
     }
 
+    private enum WinderDirection{
+        clockwise(0),
+        counterclockwise(1);
 
+        int value;
+        private static Map map = new HashMap<>();
+        WinderDirection (int p){
+            value = p;
+        }
+
+        static {
+            for (WinderDirection state : WinderDirection.values()) {
+                map.put(state.value, state);
+            }
+        }
+
+        public static WinderDirection valueOf(int state) {
+            return (WinderDirection) map.get(state);
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
     public TerminalFragment() {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -218,12 +252,12 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         winderStateText = view.findViewById(R.id.winder_state);
-        winderStateText.setTextColor(getResources().getColor(R.color.colorRecieveText));
-        winderStateText.setText("winder state: " + winderState);
+        //winderStateText.setTextColor(getResources().getColor(R.color.colorRecieveText));
+        winderStateText.setText(getString(R.string.winder_state) + winderState);
 
         windCountText = view.findViewById(R.id.wind_count);
-        windCountText.setTextColor(getResources().getColor(R.color.colorRecieveText));
-        windCountText.setText("count: " + windCount);
+        //windCountText.setTextColor(getResources().getColor(R.color.colorRecieveText));
+        windCountText.setText(getString(R.string.wind_count) + windCount);
 
         View startBtn = view.findViewById(R.id.start_btn);
         startBtn.setOnClickListener(v -> sendCommand(WinderCommand.start));
@@ -233,6 +267,35 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         resetBtn.setOnClickListener(v -> sendCommand(WinderCommand.reset));
         View homeBtn = view.findViewById(R.id.home_btn);
         homeBtn.setOnClickListener(v -> sendCommand(WinderCommand.home));
+
+        View machineSettingsBtn = view.findViewById(R.id.machine_settings_btn);
+        machineSettingsBtn.setOnClickListener(v -> machineSettings(view));
+        View windSettingsBtn = view.findViewById(R.id.wind_settings_btn);
+        windSettingsBtn.setOnClickListener(v -> windSettings(view));
+
+        traversePositionText = view.findViewById(R.id.traverse_position);
+        traversePositionText.setText(getString(R.string.traverse_position) + traversePosition);
+        winderFaceText = view.findViewById(R.id.winder_face);
+        winderFaceText.setText(getString(R.string.winder_face) + machineConfig.winderFace);
+        maxSpeedText = view.findViewById(R.id.max_speed);
+        maxSpeedText.setText(getString(R.string.max_speed) + machineConfig.maxSpeed);
+
+        leftLimitText = view.findViewById(R.id.left_limit);
+        leftLimitText.setText(getString(R.string.left_limit) + windConfig.leftLimit);
+        rightLimitText = view.findViewById(R.id.right_limit);
+        rightLimitText.setText(getString(R.string.right_limit) + windConfig.rightLimit);
+        traverseIncrementText = view.findViewById(R.id.traverse_increment);
+        traverseIncrementText.setText(getString(R.string.traverse_increment) + windConfig.traverseIncrement);
+        windTargetText = view.findViewById(R.id.wind_target);
+        windTargetText.setText(getString(R.string.wind_target) + windConfig.windTarget);
+        directionText = view.findViewById(R.id.direction);
+        directionText.setText(getString(R.string.direction) + WinderDirection.valueOf(windConfig.direction));
+
+        View settingsDoneBtn = view.findViewById(R.id.settings_done_btn);
+        settingsDoneBtn.setOnClickListener(v -> settingsDone(view));
+
+        View consoleBtn = view.findViewById(R.id.console_btn);
+        consoleBtn.setOnClickListener(v -> toggleConsole(view));
 
         TextView sendText = view.findViewById(R.id.send_text);
         View sendBtn = view.findViewById(R.id.send_btn);
@@ -246,6 +309,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         }
         return view;
     }
+
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
@@ -377,6 +441,43 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         send("{'command':" + command.getValue() + "}");
     }
 
+    private void settingsDone(View view){
+        sendCommand(WinderCommand.leaveCalibration);
+        LinearLayout settingsLayout = view.findViewById(R.id.settings_layout);
+        settingsLayout.setVisibility(View.GONE);
+        view.findViewById(R.id.winder_controls_layout).setVisibility(View.VISIBLE);
+
+    }
+
+    private void machineSettings(View view){
+        sendCommand(WinderCommand.enterCalibration);
+        sendCommand(WinderCommand.sendMachineConfig);
+        sendCommand(WinderCommand.sendWindConfig);
+        sendCommand(WinderCommand.sendTraversePos);
+        view.findViewById(R.id.settings_layout).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.machine_settings_layout).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.wind_settings_layout).setVisibility(View.GONE);
+        view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
+
+    }
+
+    private void windSettings(View view){
+        sendCommand(WinderCommand.enterCalibration);
+        sendCommand(WinderCommand.sendMachineConfig);
+        sendCommand(WinderCommand.sendWindConfig);
+        sendCommand(WinderCommand.sendTraversePos);
+        view.findViewById(R.id.settings_layout).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.machine_settings_layout).setVisibility(View.GONE);
+        view.findViewById(R.id.wind_settings_layout).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
+    }
+    private void toggleConsole(View view) {
+        LinearLayout consoleLayout = view.findViewById(R.id.console_layout);
+        int vis = consoleLayout.getVisibility();
+        consoleLayout.setVisibility(vis == View.GONE? View.VISIBLE : View.GONE);
+    }
+
+
     private void send(String str) {
         if(!connected) {
             Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
@@ -432,20 +533,28 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                             int state = json.get("winderState").getAsInt();
                             winderState = WinderState.valueOf(state);
                             spn.append("Info: winder state: " + winderState + '\n');
-                            winderStateText.setText("winder state: " + winderState);
+                            winderStateText.setText(getString(R.string.winder_state) + winderState);
                         }else if(json.has("count")){
                             windCount = json.get("count").getAsInt();
-                            windCountText.setText("count: " + windCount);
+                            windCountText.setText(getString(R.string.wind_count) + windCount);
                         }else if(json.has("debug")){
                             ;
                         }else if(json.has("leftLimit")){
                             Gson gson = new Gson();
                             windConfig = gson.fromJson(json, WindConfig.class);
+                            leftLimitText.setText(getString(R.string.left_limit) + windConfig.leftLimit);
+                            rightLimitText.setText(getString(R.string.right_limit) + windConfig.rightLimit);
+                            traverseIncrementText.setText(getString(R.string.traverse_increment) + windConfig.traverseIncrement);
+                            windTargetText.setText(getString(R.string.wind_target) + windConfig.windTarget);
+                            directionText.setText(getString(R.string.direction) + WinderDirection.valueOf(windConfig.direction));
                         }else if(json.has("maxSpeed")){
                             Gson gson = new Gson();
                             machineConfig = gson.fromJson(json, MachineConfig.class);
+                            winderFaceText.setText(getString(R.string.winder_face) + machineConfig.winderFace);
+                            maxSpeedText.setText(getString(R.string.max_speed) + machineConfig.maxSpeed);
                         }else if(json.has("traversePosition")){
                             traversePosition = json.get("traversePosition").getAsInt();
+                            traversePositionText.setText(getString(R.string.traverse_position) + traversePosition);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
