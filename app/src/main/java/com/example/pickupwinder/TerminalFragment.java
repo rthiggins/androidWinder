@@ -23,6 +23,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -74,10 +76,15 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private Integer windCount = 0;
     private int traversePosition = 0;
 
+    private SeekBar traverseSeekbar;
     private TextView traversePositionText;
+
+    private NumberPicker maxSpeedPicker;
     private TextView winderFaceText;
     private TextView maxSpeedText;
 
+    private NumberPicker traverseIncrementPicker;
+    private NumberPicker windCountPicker;
     private TextView leftLimitText;
     private TextView rightLimitText;
     private TextView traverseIncrementText;
@@ -95,12 +102,25 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         private int winderFace;
     }
 
+    enum MachineConfigField{
+        MAX_SPEED,
+        WINDER_FACE
+    }
+
     public class WindConfig{
         private int leftLimit;
         private int rightLimit;
         private int traverseIncrement;
         private int windTarget;
         private int direction;
+    }
+
+    enum WindConfigField{
+        LEFT_LIMIT,
+        RIGHT_LIMIT,
+        TRAVERSE_INCREMENT,
+        WIND_TARGET,
+        DIRECTION
     }
 
     private enum WinderCommand {
@@ -273,12 +293,64 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         View windSettingsBtn = view.findViewById(R.id.wind_settings_btn);
         windSettingsBtn.setOnClickListener(v -> windSettings(view));
 
+        View setWinderFaceBtn = view.findViewById(R.id.set_winder_face_btn);
+        setWinderFaceBtn.setOnClickListener(v -> setWinderFace());
+
+        View setMaxBtn = view.findViewById(R.id.set_max_btn);
+        maxSpeedPicker = view.findViewById(R.id.max_speed_picker);
+        maxSpeedPicker.setMaxValue(255);
+        maxSpeedPicker.setMinValue(0);
+        maxSpeedPicker.setWrapSelectorWheel(false);
+        maxSpeedPicker.setValue(machineConfig.maxSpeed);
+        setMaxBtn.setOnClickListener(v -> setMaxSpeed());
+        
+        View traverseMinusBtn = view.findViewById(R.id.traverse_minus_btn);
+        traverseMinusBtn.setOnClickListener(v -> traverseMinus());
+        traverseSeekbar = view.findViewById(R.id.traverse_seekBar);
+        traverseSeekbar.setProgress(traversePosition);
+        traverseSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int progressChangedValue = 0;
+
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChangedValue = progress;
+            }
+
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                traverseMoveTo(progressChangedValue);
+            }
+        });
+        View traversePlusBtn = view.findViewById(R.id.traverse_plus_btn);
+        traversePlusBtn.setOnClickListener(v -> traversePlus());
         traversePositionText = view.findViewById(R.id.traverse_position);
         traversePositionText.setText(getString(R.string.traverse_position) + traversePosition);
         winderFaceText = view.findViewById(R.id.winder_face);
         winderFaceText.setText(getString(R.string.winder_face) + machineConfig.winderFace);
         maxSpeedText = view.findViewById(R.id.max_speed);
         maxSpeedText.setText(getString(R.string.max_speed) + machineConfig.maxSpeed);
+
+
+        view.findViewById(R.id.set_left_limit_btn).setOnClickListener(v -> setLeftLimit());
+        view.findViewById(R.id.set_right_limit_btn).setOnClickListener(v -> setRightLimit());
+
+        traverseIncrementPicker = view.findViewById(R.id.traverse_increment_picker);
+        traverseIncrementPicker.setMaxValue(10);
+        traverseIncrementPicker.setMinValue(1);
+        traverseIncrementPicker.setWrapSelectorWheel(false);
+        traverseIncrementPicker.setValue(windConfig.traverseIncrement);
+        view.findViewById(R.id.set_traverse_increment_btn).setOnClickListener(v -> setTraverseIncrement());
+
+        windCountPicker = view.findViewById(R.id.wind_count_picker);
+        windCountPicker.setMaxValue(30000);
+        windCountPicker.setMinValue(1);
+        windCountPicker.setWrapSelectorWheel(false);
+        windCountPicker.setValue(windConfig.windTarget);
+        view.findViewById(R.id.set_wind_count_btn).setOnClickListener(v -> setWindCount());
+
+        view.findViewById(R.id.toggle_direction_btn).setOnClickListener(v -> toggleDirection());
 
         leftLimitText = view.findViewById(R.id.left_limit);
         leftLimitText.setText(getString(R.string.left_limit) + windConfig.leftLimit);
@@ -308,6 +380,49 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
             receiveBtn.setOnClickListener(v -> read());
         }
         return view;
+    }
+
+    private void toggleDirection() {
+        setWindConfigVal(WindConfigField.DIRECTION, windConfig.direction == 0 ? 1 : 0);
+    }
+
+    private void setWindCount() {
+        setWindConfigVal(WindConfigField.WIND_TARGET, windCountPicker.getValue());
+    }
+
+    private void setTraverseIncrement() {
+        setWindConfigVal(WindConfigField.TRAVERSE_INCREMENT, traverseIncrementPicker.getValue());
+    }
+
+    private void setRightLimit() {
+        setWindConfigVal(WindConfigField.RIGHT_LIMIT, traversePosition);
+    }
+
+    private void setLeftLimit() {
+        setWindConfigVal(WindConfigField.LEFT_LIMIT, traversePosition);
+    }
+
+    private void traversePlus() {
+        sendCommand(WinderCommand.traversePlus);
+    }
+
+    private void traverseMinus() {
+        sendCommand(WinderCommand.traverseMinus);
+    }
+
+    private void traverseMoveTo(int pos){
+        send("{'moveTo':" + pos + "}");
+    }
+
+    private void setWinderFace() {
+        setMachineConfigVal(MachineConfigField.WINDER_FACE, traversePosition);
+    }
+
+    private void setMaxSpeed() {
+        setMachineConfigVal(MachineConfigField.MAX_SPEED, maxSpeedPicker.getValue());
+    }
+
+    private void maxSpeedChanged() {
     }
 
 
@@ -477,6 +592,42 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         consoleLayout.setVisibility(vis == View.GONE? View.VISIBLE : View.GONE);
     }
 
+    private void setMachineConfigVal(MachineConfigField field, int val){
+        MachineConfig newConfig = machineConfig;
+        switch(field){
+            case MAX_SPEED:
+                newConfig.maxSpeed = val;
+                break;
+            case WINDER_FACE:
+                newConfig.winderFace = val;
+                break;
+            default:
+        }
+        Gson gson = new Gson();
+        send(gson.toJson(newConfig));
+    }
+
+    private void setWindConfigVal(WindConfigField field, int val){
+        WindConfig newConfig = windConfig;
+        switch(field){
+            case LEFT_LIMIT:
+                newConfig.leftLimit = val;
+                break;
+            case RIGHT_LIMIT:
+                newConfig.rightLimit = val;
+                break;
+            case TRAVERSE_INCREMENT:
+                newConfig.traverseIncrement = val;
+                break;
+            case WIND_TARGET:
+                newConfig.windTarget = val;
+            case DIRECTION:
+                newConfig.direction = val;
+            default:
+        }
+        Gson gson = new Gson();
+        send(gson.toJson(newConfig));
+    }
 
     private void send(String str) {
         if(!connected) {
@@ -542,6 +693,8 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                         }else if(json.has("leftLimit")){
                             Gson gson = new Gson();
                             windConfig = gson.fromJson(json, WindConfig.class);
+                            traverseIncrementPicker.setValue(windConfig.traverseIncrement);
+                            windCountPicker.setValue(windConfig.windTarget);
                             leftLimitText.setText(getString(R.string.left_limit) + windConfig.leftLimit);
                             rightLimitText.setText(getString(R.string.right_limit) + windConfig.rightLimit);
                             traverseIncrementText.setText(getString(R.string.traverse_increment) + windConfig.traverseIncrement);
@@ -552,9 +705,11 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                             machineConfig = gson.fromJson(json, MachineConfig.class);
                             winderFaceText.setText(getString(R.string.winder_face) + machineConfig.winderFace);
                             maxSpeedText.setText(getString(R.string.max_speed) + machineConfig.maxSpeed);
+                            maxSpeedPicker.setValue(machineConfig.maxSpeed);
                         }else if(json.has("traversePosition")){
                             traversePosition = json.get("traversePosition").getAsInt();
                             traversePositionText.setText(getString(R.string.traverse_position) + traversePosition);
+                            traverseSeekbar.setProgress(traversePosition);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
