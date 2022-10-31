@@ -3,14 +3,14 @@
     <string name="app_title">Pickup Winder</string>
     <string name="app_name">Pickup Winder</string>
     <string name="devices">USB Devices</string>
-    <string name="max_speed">"max speed: "</string>
-    <string name="winder_face">"winder face: "</string>
-    <string name="wind_count">"count: "</string>
-    <string name="winder_state">"winder state: "</string>
-    <string name="traverse_position">"traverse position: "</string>
-    <string name="left_limit">"left limit: "</string>
-    <string name="right_limit">"right limit: "</string>
-    <string name="traverse_increment">"traverse increment: "</string>
-    <string name="wind_target">"wind target: "</string>
-    <string name="direction">"direction: "</string>
+    <string name="max_speed">"Max Speed: "</string>
+    <string name="winder_face">"Winder Face: "</string>
+    <string name="wind_count">"Wind Count: "</string>
+    <string name="winder_state">"Winder State: "</string>
+    <string name="traverse_position">"Traverse Position: "</string>
+    <string name="left_limit">"Left Limit: "</string>
+    <string name="right_limit">"Right Limit: "</string>
+    <string name="traverse_increment">"Traverse Increment: "</string>
+    <string name="wind_target">"Wind Target: "</string>
+    <string name="direction">"Direction: "</string>
 </resources>

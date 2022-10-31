@@ -70,6 +70,11 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private UsbPermission usbPermission = UsbPermission.Unknown;
     private boolean connected = false;
 
+    private View view;
+
+    private MenuItem breakItem;
+    private MenuItem homeItem;
+
     private TextView winderStateText;
     private WinderState winderState = WinderState.unknown;
     private TextView windCountText;
@@ -90,6 +95,9 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private TextView traverseIncrementText;
     private TextView windTargetText;
     private TextView directionText;
+
+    private LinearLayout winderLayout;
+    private LinearLayout consoleLayout;
 
     private String jsonData = "";
 
@@ -266,7 +274,8 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_terminal, container, false);
+        view = inflater.inflate(R.layout.fragment_terminal, container, false);
+
         receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
         receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
         receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -285,16 +294,11 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         pauseBtn.setOnClickListener(v -> sendCommand(WinderCommand.pause));
         View resetBtn = view.findViewById(R.id.reset_btn);
         resetBtn.setOnClickListener(v -> sendCommand(WinderCommand.reset));
-        View homeBtn = view.findViewById(R.id.home_btn);
-        homeBtn.setOnClickListener(v -> sendCommand(WinderCommand.home));
-
-        View machineSettingsBtn = view.findViewById(R.id.machine_settings_btn);
-        machineSettingsBtn.setOnClickListener(v -> machineSettings(view));
-        View windSettingsBtn = view.findViewById(R.id.wind_settings_btn);
-        windSettingsBtn.setOnClickListener(v -> windSettings(view));
 
         View setWinderFaceBtn = view.findViewById(R.id.set_winder_face_btn);
         setWinderFaceBtn.setOnClickListener(v -> setWinderFace());
+
+        view.findViewById(R.id.traverse_to_winder_face_btn).setOnClickListener(v -> moveToWinderFace());
 
         View setMaxBtn = view.findViewById(R.id.set_max_btn);
         maxSpeedPicker = view.findViewById(R.id.max_speed_picker);
@@ -364,10 +368,12 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         directionText.setText(getString(R.string.direction) + WinderDirection.valueOf(windConfig.direction));
 
         View settingsDoneBtn = view.findViewById(R.id.settings_done_btn);
-        settingsDoneBtn.setOnClickListener(v -> settingsDone(view));
+        settingsDoneBtn.setOnClickListener(v -> settingsDone());
+        winderLayout = view.findViewById(R.id.winder_layout);
+        consoleLayout = view.findViewById(R.id.console_layout);
 
-        View consoleBtn = view.findViewById(R.id.console_btn);
-        consoleBtn.setOnClickListener(v -> toggleConsole(view));
+//        View consoleBtn = view.findViewById(R.id.toggle_console);
+//        consoleBtn.setOnClickListener(v -> toggleConsole(view));
 
         TextView sendText = view.findViewById(R.id.send_text);
         View sendBtn = view.findViewById(R.id.send_btn);
@@ -380,6 +386,10 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
             receiveBtn.setOnClickListener(v -> read());
         }
         return view;
+    }
+
+    private void moveToWinderFace() {
+        traverseMoveTo(machineConfig.winderFace);
     }
 
     private void toggleDirection() {
@@ -429,6 +439,8 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_terminal, menu);
+        breakItem = menu.findItem(R.id.send_break);
+        homeItem = menu.findItem(R.id.home_traverse);
     }
 
     @Override
@@ -456,7 +468,27 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                 }
             }
             return true;
-        } else {
+        } else if(id == R.id.toggle_console){
+            if(consoleLayout.getVisibility() == View.GONE){
+                consoleLayout.setVisibility(View.VISIBLE);
+                ((LinearLayout.LayoutParams) winderLayout.getLayoutParams()).weight = 6;
+                breakItem.setVisible(true);
+            }else{
+                consoleLayout.setVisibility(View.GONE);
+                ((LinearLayout.LayoutParams) winderLayout.getLayoutParams()).weight = 9;
+                breakItem.setVisible(false);
+            }
+            return true;
+        }else if(id == R.id.home_traverse){
+            sendCommand(WinderCommand.home);
+            return true;
+        }else if(id == R.id.machine_settings) {
+            machineSettings();
+            return true;
+        }else if(id == R.id.wind_settings){
+            windSettings();
+            return true;
+        }else {
             return super.onOptionsItemSelected(item);
         }
     }
@@ -556,15 +588,16 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         send("{'command':" + command.getValue() + "}");
     }
 
-    private void settingsDone(View view){
+    private void settingsDone(){
         sendCommand(WinderCommand.leaveCalibration);
         LinearLayout settingsLayout = view.findViewById(R.id.settings_layout);
         settingsLayout.setVisibility(View.GONE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.VISIBLE);
+        homeItem.setVisible(true);
 
     }
 
-    private void machineSettings(View view){
+    private void machineSettings(){
         sendCommand(WinderCommand.enterCalibration);
         sendCommand(WinderCommand.sendMachineConfig);
         sendCommand(WinderCommand.sendWindConfig);
@@ -573,10 +606,11 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         view.findViewById(R.id.machine_settings_layout).setVisibility(View.VISIBLE);
         view.findViewById(R.id.wind_settings_layout).setVisibility(View.GONE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
+        homeItem.setVisible(false);
 
     }
 
-    private void windSettings(View view){
+    private void windSettings(){
         sendCommand(WinderCommand.enterCalibration);
         sendCommand(WinderCommand.sendMachineConfig);
         sendCommand(WinderCommand.sendWindConfig);
@@ -585,11 +619,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         view.findViewById(R.id.machine_settings_layout).setVisibility(View.GONE);
         view.findViewById(R.id.wind_settings_layout).setVisibility(View.VISIBLE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
-    }
-    private void toggleConsole(View view) {
-        LinearLayout consoleLayout = view.findViewById(R.id.console_layout);
-        int vis = consoleLayout.getVisibility();
-        consoleLayout.setVisibility(vis == View.GONE? View.VISIBLE : View.GONE);
+        homeItem.setVisible(false);
     }
 
     private void setMachineConfigVal(MachineConfigField field, int val){

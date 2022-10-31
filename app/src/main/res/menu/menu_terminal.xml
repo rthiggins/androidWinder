@@ -9,5 +9,19 @@
     <item
         android:id="@+id/send_break"
         android:title="Send BREAK"
-        app:showAsAction="never" />
+        app:showAsAction="never"
+        android:visible="false"/>
+    <item
+        android:id="@+id/toggle_console"
+        android:title="Toggle Console" />
+    <item
+        android:id="@+id/home_traverse"
+        android:title="Home Traverse"
+        android:visible="true"/>
+    <item
+        android:id="@+id/machine_settings"
+        android:title="Machine Settings" />
+    <item
+        android:id="@+id/wind_settings"
+        android:title="Wind Settings"/>
 </menu>
