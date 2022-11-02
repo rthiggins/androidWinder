@@ -16,8 +16,7 @@
         android:title="Toggle Console" />
     <item
         android:id="@+id/home_traverse"
-        android:title="Home Traverse"
-        android:visible="true"/>
+        android:title="Home Traverse"/>
     <item
         android:id="@+id/machine_settings"
         android:title="Machine Settings" />

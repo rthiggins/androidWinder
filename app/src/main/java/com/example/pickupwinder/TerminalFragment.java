@@ -593,7 +593,6 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         LinearLayout settingsLayout = view.findViewById(R.id.settings_layout);
         settingsLayout.setVisibility(View.GONE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.VISIBLE);
-        homeItem.setVisible(true);
 
     }
 
@@ -606,7 +605,6 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         view.findViewById(R.id.machine_settings_layout).setVisibility(View.VISIBLE);
         view.findViewById(R.id.wind_settings_layout).setVisibility(View.GONE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
-        homeItem.setVisible(false);
 
     }
 
@@ -619,7 +617,6 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         view.findViewById(R.id.machine_settings_layout).setVisibility(View.GONE);
         view.findViewById(R.id.wind_settings_layout).setVisibility(View.VISIBLE);
         view.findViewById(R.id.winder_controls_layout).setVisibility(View.GONE);
-        homeItem.setVisible(false);
     }
 
     private void setMachineConfigVal(MachineConfigField field, int val){

@@ -2,15 +2,14 @@
 
 <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="9"
     android:orientation="horizontal"
+    android:gravity="center"
     android:baselineAligned="false">
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_weight="1.5"
-        android:layout_height="match_parent"/>
+
 
     <LinearLayout
         android:layout_width="0dp"
@@ -159,7 +158,8 @@
                             android:id="@+id/reset_btn"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Reset" />
+                            android:text="Reset"
+                            tools:ignore="TextContrastCheck" />
 
 
                     </LinearLayout>
@@ -277,13 +277,15 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Set Left Limit" />
+                                    android:text="Set Left Limit"
+                                    style="?android:attr/buttonBarButtonStyle"/>
                                 <Button
                                     android:id="@+id/set_right_limit_btn"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Set Right Limit" />
+                                    android:text="Set Right Limit"
+                                    style="?android:attr/buttonBarButtonStyle" />
                             </LinearLayout>
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -434,17 +436,14 @@
                     android:id="@+id/send_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_send_white_24dp" />
+                    app:srcCompat="@drawable/ic_send_white_24dp"
+                    android:contentDescription="TODO" />
             </LinearLayout>
         </LinearLayout>
         <!--   end of console stuff-->
 
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_weight="1.5"
-        android:layout_height="match_parent"/>
 </LinearLayout>
 
 
