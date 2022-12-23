@@ -403,7 +403,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     }
 
     private void moveToWinderFace() {
-        traverseMoveTo(machineConfig.winderFace);
+        traverseMoveTo(0);
     }
 
     private void toggleDirection() {
@@ -930,7 +930,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private double turnsPerLayer(){
         double ret = 0;
         try {
-            ret = (windConfig.rightLimit - windConfig.leftLimit)/2 * windConfig.hallEvents/windConfig.traverseIncrement;
+            ret = (windConfig.leftLimit - windConfig.rightLimit)/2 * windConfig.hallEvents/windConfig.traverseIncrement;
         }catch (Exception e){
             //ignore possible divide by zero?
         }
@@ -939,8 +939,6 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     }
 
     private int convertTraversePosition(int pos){
-        int ret = -1 * (pos - machineConfig.winderFace);
-        Toast.makeText(getActivity(), "pos = " + pos + ", new pos = " + ret, Toast.LENGTH_LONG).show();
-        return ret;
+        return -1 * (pos - machineConfig.winderFace);
     }
 }

@@ -278,15 +278,13 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Set Left Limit"
-                                    style="?android:attr/buttonBarButtonStyle"/>
+                                    android:text="Set Left Limit"/>
                                 <Button
                                     android:id="@+id/set_right_limit_btn"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Set Right Limit"
-                                    style="?android:attr/buttonBarButtonStyle" />
+                                    android:text="Set Right Limit" />
                             </LinearLayout>
 
                             <LinearLayout
