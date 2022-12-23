@@ -6,7 +6,9 @@
         <entry key="..\:/projects/androidWinder/app/src/main/res/drawable/ic_delete_white_24dp.xml" value="0.211" />
         <entry key="..\:/projects/androidWinder/app/src/main/res/layout/activity_main.xml" value="0.18229166666666666" />
         <entry key="..\:/projects/androidWinder/app/src/main/res/layout/device_list_header.xml" value="0.19947916666666668" />
+        <entry key="..\:/projects/androidWinder/app/src/main/res/layout/device_list_item.xml" value="0.29635416666666664" />
         <entry key="..\:/projects/androidWinder/app/src/main/res/layout/fragment_terminal.xml" value="0.27488151658767773" />
+        <entry key="..\:/projects/androidWinder/app/src/main/res/layout/pitch_spinner_item.xml" value="0.29635416666666664" />
         <entry key="..\:/projects/androidWinder/app/src/main/res/menu/menu_devices.xml" value="0.19947916666666668" />
         <entry key="..\:/projects/androidWinder/app/src/main/res/menu/menu_terminal.xml" value="0.19947916666666668" />
       </map>

@@ -182,24 +182,25 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
                             <Button
-                                android:id="@+id/traverse_minus_btn"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="-" />
-                            <SeekBar
-                                android:id="@+id/traverse_seekBar"
-                                android:max="300"
-                                android:min="0"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="4"/>
-                            <Button
                                 android:id="@+id/traverse_plus_btn"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="+" />
+                            <SeekBar
+                                android:id="@+id/traverse_seekBar"
+                                android:max="600"
+                                android:min="0"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="4"/>
+
+                            <Button
+                                android:id="@+id/traverse_minus_btn"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="-" />
                         </LinearLayout>
                         <TextView
                             android:id="@+id/traverse_position"
@@ -287,6 +288,7 @@
                                     android:text="Set Right Limit"
                                     style="?android:attr/buttonBarButtonStyle" />
                             </LinearLayout>
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -297,19 +299,18 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center_vertical"
                                     android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                                    android:text="Select a traverse increment between 1 and 10:"/>
-                                <NumberPicker
-                                    android:id="@+id/traverse_increment_picker"
-                                    android:layout_width="0dp"
-                                    android:layout_weight=".15"
-                                    android:layout_height="wrap_content" />
-                            </LinearLayout>
+                                    android:text="Select pitch in mm as steps per hall events"/>
 
+                                <Spinner android:id="@+id/pitch_spinner"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"/>
+                            </LinearLayout>
                             <Button
-                                android:id="@+id/set_traverse_increment_btn"
+                                android:id="@+id/set_pitch_btn"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Set Traverse Increment" />
+                                android:text="Set Pitch" />
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -354,12 +355,22 @@
                                 android:layout_height="wrap_content"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
                             <TextView
+                                android:id="@+id/hall_events"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+                            <TextView
                                 android:id="@+id/wind_target"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
                             <TextView
                                 android:id="@+id/direction"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+                            <TextView
+                                android:id="@+id/turns_per_layer"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Medium" />

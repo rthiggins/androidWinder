@@ -22,9 +22,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -49,7 +52,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TerminalFragment extends Fragment implements SerialInputOutputManager.Listener {
+public class TerminalFragment extends Fragment implements SerialInputOutputManager.Listener, AdapterView.OnItemSelectedListener {
 
     private enum UsbPermission { Unknown, Requested, Granted, Denied }
 
@@ -88,13 +91,17 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
     private TextView winderFaceText;
     private TextView maxSpeedText;
 
-    private NumberPicker traverseIncrementPicker;
     private NumberPicker windCountPicker;
     private TextView leftLimitText;
     private TextView rightLimitText;
+    private String[] pitchOptions = { "0.400 4/1", "0.300 3/1", "0.200 2/1", "0.150 3/2", "0.130 4/3", "0.1 1/1", "0.080 4/5",
+            "0.075 3/4", "0.066 2/3", "0.060 3/5", "0.057 4/7", "0.050 1/2" };
+    private Spinner pitchSpinner;
     private TextView traverseIncrementText;
+    private TextView hallEventsText;
     private TextView windTargetText;
     private TextView directionText;
+    private TextView turnsPerLayerText;
 
     private LinearLayout winderLayout;
     private LinearLayout consoleLayout;
@@ -119,6 +126,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         private int leftLimit;
         private int rightLimit;
         private int traverseIncrement;
+        private int hallEvents;
         private int windTarget;
         private int direction;
     }
@@ -127,6 +135,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         LEFT_LIMIT,
         RIGHT_LIMIT,
         TRAVERSE_INCREMENT,
+        HALL_EVENTS,
         WIND_TARGET,
         DIRECTION
     }
@@ -311,7 +320,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         View traverseMinusBtn = view.findViewById(R.id.traverse_minus_btn);
         traverseMinusBtn.setOnClickListener(v -> traverseMinus());
         traverseSeekbar = view.findViewById(R.id.traverse_seekBar);
-        traverseSeekbar.setProgress(traversePosition);
+        traverseSeekbar.setProgress(convertTraversePosition(traversePosition));
         traverseSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progressChangedValue = 0;
 
@@ -324,9 +333,12 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
             }
 
             public void onStopTrackingTouch(SeekBar seekBar) {
-                traverseMoveTo(progressChangedValue);
+                traverseMoveTo(convertTraversePosition(progressChangedValue));
             }
         });
+
+
+        traverseSeekbar.setProgress(300);
         View traversePlusBtn = view.findViewById(R.id.traverse_plus_btn);
         traversePlusBtn.setOnClickListener(v -> traversePlus());
         traversePositionText = view.findViewById(R.id.traverse_position);
@@ -340,12 +352,13 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         view.findViewById(R.id.set_left_limit_btn).setOnClickListener(v -> setLeftLimit());
         view.findViewById(R.id.set_right_limit_btn).setOnClickListener(v -> setRightLimit());
 
-        traverseIncrementPicker = view.findViewById(R.id.traverse_increment_picker);
-        traverseIncrementPicker.setMaxValue(10);
-        traverseIncrementPicker.setMinValue(1);
-        traverseIncrementPicker.setWrapSelectorWheel(false);
-        traverseIncrementPicker.setValue(windConfig.traverseIncrement);
-        view.findViewById(R.id.set_traverse_increment_btn).setOnClickListener(v -> setTraverseIncrement());
+        pitchSpinner = (Spinner) view.findViewById(R.id.pitch_spinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, pitchOptions);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        pitchSpinner.setAdapter(adapter);
+        pitchSpinner.setOnItemSelectedListener(this);
+
+        view.findViewById(R.id.set_pitch_btn).setOnClickListener(v -> setPitch(pitchSpinner.getSelectedItemPosition()));
 
         windCountPicker = view.findViewById(R.id.wind_count_picker);
         windCountPicker.setMaxValue(30000);
@@ -362,18 +375,19 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
         rightLimitText.setText(getString(R.string.right_limit) + windConfig.rightLimit);
         traverseIncrementText = view.findViewById(R.id.traverse_increment);
         traverseIncrementText.setText(getString(R.string.traverse_increment) + windConfig.traverseIncrement);
+        hallEventsText = view.findViewById(R.id.hall_events);
+        hallEventsText.setText(getString(R.string.hall_events) + windConfig.hallEvents);
         windTargetText = view.findViewById(R.id.wind_target);
         windTargetText.setText(getString(R.string.wind_target) + windConfig.windTarget);
         directionText = view.findViewById(R.id.direction);
         directionText.setText(getString(R.string.direction) + WinderDirection.valueOf(windConfig.direction));
+        turnsPerLayerText = view.findViewById(R.id.turns_per_layer);
+        turnsPerLayerText.setText(getString(R.string.turns_per_layer) + turnsPerLayer());
 
         View settingsDoneBtn = view.findViewById(R.id.settings_done_btn);
         settingsDoneBtn.setOnClickListener(v -> settingsDone());
         winderLayout = view.findViewById(R.id.winder_layout);
         consoleLayout = view.findViewById(R.id.console_layout);
-
-//        View consoleBtn = view.findViewById(R.id.toggle_console);
-//        consoleBtn.setOnClickListener(v -> toggleConsole(view));
 
         TextView sendText = view.findViewById(R.id.send_text);
         View sendBtn = view.findViewById(R.id.send_btn);
@@ -398,10 +412,6 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
 
     private void setWindCount() {
         setWindConfigVal(WindConfigField.WIND_TARGET, windCountPicker.getValue());
-    }
-
-    private void setTraverseIncrement() {
-        setWindConfigVal(WindConfigField.TRAVERSE_INCREMENT, traverseIncrementPicker.getValue());
     }
 
     private void setRightLimit() {
@@ -646,6 +656,9 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
             case TRAVERSE_INCREMENT:
                 newConfig.traverseIncrement = val;
                 break;
+            case HALL_EVENTS:
+                newConfig.hallEvents = val;
+                break;
             case WIND_TARGET:
                 newConfig.windTarget = val;
             case DIRECTION:
@@ -720,13 +733,15 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                         }else if(json.has("leftLimit")){
                             Gson gson = new Gson();
                             windConfig = gson.fromJson(json, WindConfig.class);
-                            traverseIncrementPicker.setValue(windConfig.traverseIncrement);
                             windCountPicker.setValue(windConfig.windTarget);
+                            pitchSpinner.setSelection(getPitchSpinnerPosition(windConfig.traverseIncrement, windConfig.hallEvents));
                             leftLimitText.setText(getString(R.string.left_limit) + windConfig.leftLimit);
                             rightLimitText.setText(getString(R.string.right_limit) + windConfig.rightLimit);
                             traverseIncrementText.setText(getString(R.string.traverse_increment) + windConfig.traverseIncrement);
+                            hallEventsText.setText(getString(R.string.hall_events) + windConfig.hallEvents);
                             windTargetText.setText(getString(R.string.wind_target) + windConfig.windTarget);
                             directionText.setText(getString(R.string.direction) + WinderDirection.valueOf(windConfig.direction));
+                            turnsPerLayerText.setText(getString(R.string.turns_per_layer) + turnsPerLayer());
                         }else if(json.has("maxSpeed")){
                             Gson gson = new Gson();
                             machineConfig = gson.fromJson(json, MachineConfig.class);
@@ -736,7 +751,7 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
                         }else if(json.has("traversePosition")){
                             traversePosition = json.get("traversePosition").getAsInt();
                             traversePositionText.setText(getString(R.string.traverse_position) + traversePosition);
-                            traverseSeekbar.setProgress(traversePosition);
+                            traverseSeekbar.setProgress(convertTraversePosition(traversePosition));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -834,5 +849,98 @@ public class TerminalFragment extends Fragment implements SerialInputOutputManag
             cdBtn.setChecked(false);
             riBtn.setChecked(false);
         }
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+//        String[] pitchOptions = { "0.400 4/1", "0.300 3/1", "0.200 2/1", "0.150 3/2", "0.130 4/3", "0.1 1/1", "0.080 4/5",
+//                "0.075 3/4", "0.066 2/3", "0.060 3/5", "0.057 4/7", "0.050 1/2" };
+        //Toast.makeText(getApplicationContext(), "Selected User: "+users[position] ,Toast.LENGTH_SHORT).show();
+
+    }
+
+
+    private void setPitch( int i) {
+        switch (pitchOptions[i]) {
+            case "0.400 4/1":
+                setPitch(4, 1);
+                break;
+            case "0.300 3/1":
+                setPitch(3, 1);
+                break;
+            case "0.200 2/1":
+                setPitch(2, 1);
+                break;
+            case "0.150 3/2":
+                setPitch(3, 2);
+                break;
+            case "0.130 4/3":
+                setPitch(4, 3);
+                break;
+            case "0.1 1/1":
+                setPitch(1, 1);
+                break;
+            case "0.080 4/5":
+                setPitch(4, 5);
+                break;
+            case "0.075 3/4":
+                setPitch(3, 4);
+                break;
+            case "0.066 2/3":
+                setPitch(2, 3);
+                break;
+            case "0.060 3/5":
+                setPitch(3, 5);
+                break;
+            case "0.057 4/7":
+                setPitch(4, 7);
+                break;
+            case "0.050 1/2":
+                setPitch(1, 2);
+                break;
+            default:
+        }
+        Toast.makeText(getActivity(), "selected: " + pitchOptions[i], Toast.LENGTH_SHORT).show();
+    }
+    private void setPitch( int traverseIncrement, int hallEvents){
+        setWindConfigVal(WindConfigField.TRAVERSE_INCREMENT, traverseIncrement);
+        setWindConfigVal(WindConfigField.HALL_EVENTS, hallEvents);
+    }
+
+    private int getPitchSpinnerPosition( int traverseIncrement, int hallEvents){
+        //        String[] pitchOptions = { "0.400 4/1", "0.300 3/1", "0.200 2/1", "0.150 3/2", "0.130 4/3", "0.1 1/1", "0.080 4/5",
+//                "0.075 3/4", "0.066 2/3", "0.060 3/5", "0.057 4/7", "0.050 1/2" };
+        int ret = 0;
+        String sub = " " + traverseIncrement + "/" + hallEvents;
+
+        for(int i = 0 ; i < pitchOptions.length; i++ ){
+            if(pitchOptions[i].endsWith(sub)){
+                ret = i;
+                break;
+            }
+        }
+
+        return ret;
+    }
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+        // TODO - Custom Code
+    }
+
+    private double turnsPerLayer(){
+        double ret = 0;
+        try {
+            ret = (windConfig.rightLimit - windConfig.leftLimit)/2 * windConfig.hallEvents/windConfig.traverseIncrement;
+        }catch (Exception e){
+            //ignore possible divide by zero?
+        }
+
+        return ret;
+    }
+
+    private int convertTraversePosition(int pos){
+        int ret = -1 * (pos - machineConfig.winderFace);
+        Toast.makeText(getActivity(), "pos = " + pos + ", new pos = " + ret, Toast.LENGTH_LONG).show();
+        return ret;
     }
 }

@@ -11,6 +11,8 @@
     <string name="left_limit">"Left Limit: "</string>
     <string name="right_limit">"Right Limit: "</string>
     <string name="traverse_increment">"Traverse Increment: "</string>
+    <string name="hall_events">"Hall Events: "</string>
     <string name="wind_target">"Wind Target: "</string>
     <string name="direction">"Direction: "</string>
+    <string name="turns_per_layer">"Turns Per Layer: "</string>
 </resources>
